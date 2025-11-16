@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}DFA Simulator{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1 class="h3">DFA Simulator</h1>
+    <p class="text-muted">Define states, transitions, and test strings. Visualize the automaton.</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Create DFA</h5>
+            </div>
+            <div class="card-body">
+                <form id="dfa-form">
+                    <div class="mb-3">
+                        <label for="states" class="form-label">States (comma-separated)</label>
+                        <input type="text" class="form-control" id="states" placeholder="q0,q1,q2">
+                    </div>
+                    <div class="mb-3">
+                        <label for="alphabet" class="form-label">Alphabet (comma-separated)</label>
+                        <input type="text" class="form-control" id="alphabet" placeholder="0,1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="start-state" class="form-label">Start State</label>
+                        <input type="text" class="form-control" id="start-state" placeholder="q0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="accept-states" class="form-label">Accept States (comma-separated)</label>
+                        <input type="text" class="form-control" id="accept-states" placeholder="q2">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Transition Function</label>
+                        <div id="transitions-container"><!-- populated dynamically --></div>
+                        <button type="button" class="btn btn-secondary mt-2" id="add-transition">Add Transition</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create DFA</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Test DFA</h5>
+            </div>
+            <div class="card-body">
+                <div id="dfa-status" class="alert alert-info">Create a DFA first</div>
+                <form id="test-form" class="d-none">
+                    <div class="mb-3">
+                        <label for="input-string" class="form-label">Input String</label>
+                        <input type="text" class="form-control" id="input-string" placeholder="Enter a string to test">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Test String</button>
+                </form>
+                <div id="test-result" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">DFA Visualization</h5>
+            </div>
+            <div class="card-body">
+                <div id="dfa-visualization"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentDfaId = null;
+    let statesArray = [];
+    let alphabetArray = [];
+    
+    function createTransitionInputs() {
+        const container = document.getElementById('transitions-container');
+        container.innerHTML = '';
+        
+        statesArray.forEach(state => {
+            alphabetArray.forEach(symbol => {
+                const row = document.createElement('div');
+                row.className = 'row mb-2';
+                row.innerHTML = `
+                    <div class="col-4">
+                        <input type="text" class="form-control" value="${state}" readonly>
+                    </div>
+                    <div class="col-4">
+                        <input type="text" class="form-control" value="${symbol}" readonly>
+                    </div>
+                    <div class="col-4">
+                        <select class="form-control transition-next-state" data-state="${state}" data-symbol="${symbol}">
+                            <option value="">Select state</option>
+                            ${statesArray.map(s => `<option value="${s}">${s}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        });
+    }
+
+    document.getElementById('states').addEventListener('change', function() {
+        statesArray = this.value.split(',').map(s => s.trim()).filter(s => s);
+        createTransitionInputs();
+    });
+    
+    document.getElementById('alphabet').addEventListener('change', function() {
+        alphabetArray = this.value.split(',').map(s => s.trim()).filter(s => s);
+        createTransitionInputs();
+    });
+
+    document.getElementById('dfa-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const states = document.getElementById('states').value.split(',').map(s => s.trim()).filter(s => s);
+        const alphabet = document.getElementById('alphabet').value.split(',').map(s => s.trim()).filter(s => s);
+        const startState = document.getElementById('start-state').value.trim();
+        const acceptStates = document.getElementById('accept-states').value.split(',').map(s => s.trim()).filter(s => s);
+        
+        const transitions = [];
+        document.querySelectorAll('.transition-next-state').forEach(select => {
+            const state = select.getAttribute('data-state');
+            const symbol = select.getAttribute('data-symbol');
+            const nextState = select.value;
+            if (nextState) {
+                transitions.push({ state, symbol, next_state: nextState });
+            }
+        });
+        
+        fetch('/api/create_dfa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                states,
+                alphabet,
+                transitions,
+                start_state: startState,
+                accept_states: acceptStates
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                currentDfaId = data.dfa_id;
+                const status = document.getElementById('dfa-status');
+                status.className = 'alert alert-success';
+                status.textContent = 'DFA created successfully';
+                document.getElementById('test-form').classList.remove('d-none');
+                visualizeDfa(states, transitions, startState, acceptStates);
+            } else {
+                const status = document.getElementById('dfa-status');
+                status.className = 'alert alert-danger';
+                status.textContent = data.message;
+            }
+        })
+        .catch(() => {
+            const status = document.getElementById('dfa-status');
+            status.className = 'alert alert-danger';
+            status.textContent = 'Error creating DFA';
+        });
+    });
+
+    document.getElementById('test-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const inputString = document.getElementById('input-string').value;
+        
+        fetch('/api/test_dfa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                dfa_id: currentDfaId,
+                input_string: inputString
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('test-result').innerHTML = `
+                    <div class="alert ${data.accepted ? 'alert-success' : 'alert-danger'}">
+                        String ${data.accepted ? 'accepted' : 'rejected'}
+                    </div>
+                    <div>
+                        <strong>State sequence:</strong>
+                        <div class="state-sequence">
+                            ${data.state_sequence.map((state, index) => `
+                                <div class="state-circle ${index === 0 ? 'start' : ''} ${data.accepted && index === data.state_sequence.length - 1 ? 'accept' : ''}">
+                                    ${state}
+                                </div>
+                                ${index < data.state_sequence.length - 1 ? '<div>→</div>' : ''}
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('test-result').innerHTML = `
+                    <div class="alert alert-danger">
+                        ${data.message}
+                    </div>
+                `;
+            }
+        })
+        .catch(() => {
+            document.getElementById('test-result').innerHTML = `
+                <div class="alert alert-danger">
+                    Error testing DFA
+                </div>
+            `;
+        });
+    });
+    
+    function visualizeDfa(states, transitions, startState, acceptStates) {
+        const container = document.getElementById('dfa-visualization');
+        const nodes = new vis.DataSet(
+            states.map(state => ({
+                id: state,
+                label: state,
+                shape: acceptStates.includes(state) ? 'circle' : 'ellipse',
+                borderWidth: acceptStates.includes(state) ? 3 : 1,
+                borderWidthSelected: acceptStates.includes(state) ? 4 : 2,
+                color: {
+                    border: acceptStates.includes(state) ? '#dc3545' : '#2B7CE9',
+                    background: state === startState ? '#D2E5FF' : '#97C2FC'
+                }
+            }))
+        );
+        const edges = new vis.DataSet(
+            transitions.map((t, index) => ({
+                id: index,
+                from: t.state,
+                to: t.next_state,
+                label: t.symbol,
+                arrows: 'to'
+            }))
+        );
+        const data = { nodes, edges };
+        const options = {
+            layout: { hierarchical: false },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    centralGravity: 0.3,
+                    springLength: 95,
+                    springConstant: 0.04,
+                    damping: 0.09
+                }
+            }
+        };
+        new vis.Network(container, data, options);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}URL Validator{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1 class="h3">URL Validator</h1>
+    <p class="text-muted">Validate URL structure and flag potential security issues.</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Validate URL</h5>
+            </div>
+            <div class="card-body">
+                <form id="url-form">
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL</label>
+                        <input type="text" class="form-control" id="url" placeholder="https://example.com/path?query#fragment">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Validate</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div id="validation-result" class="d-none">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Validation Result</h5>
+                </div>
+                <div class="card-body">
+                    <div id="result-status"></div>
+                    <div id="rejection-reason" class="mt-3 d-none"></div>
+                    <div id="security-issues" class="mt-3 d-none"></div>
+                    <div id="url-components" class="mt-3 d-none"></div>
+                    <div class="mt-3">
+                        <h6>State Sequence</h6>
+                        <div id="state-sequence" class="state-sequence"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">URL Structure</h5>
+            </div>
+            <div class="card-body">
+                <p>A valid URL must follow this structure:</p>
+                <pre>http(s)://domain.extension/path?query#fragment</pre>
+                <p>Where:</p>
+                <ul>
+                    <li><strong>http(s):</strong> The scheme (protocol)</li>
+                    <li><strong>domain.extension:</strong> The authority (domain name)</li>
+                    <li><strong>/path:</strong> Optional path component</li>
+                    <li><strong>?query:</strong> Optional query parameters</li>
+                    <li><strong>#fragment:</strong> Optional fragment identifier</li>
+                </ul>
+                <p>The validator also checks for potential security issues such as:</p>
+                <ul>
+                    <li>SQL injection attempts</li>
+                    <li>Cross-site scripting (XSS) attempts</li>
+                    <li>Path traversal attacks</li>
+                    <li>Command injection</li>
+                    <li>Suspicious characters</li>
+                    <li>Protocol violations</li>
+                    <li>Open redirect vulnerabilities</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('url-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const url = document.getElementById('url').value.trim();
+        
+        fetch('/api/validate_url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('validation-result').classList.remove('d-none');
+            
+            const resultStatus = document.getElementById('result-status');
+            resultStatus.className = `alert ${data.valid ? 'alert-success' : 'alert-danger'}`;
+            resultStatus.textContent = `URL is ${data.valid ? 'valid' : 'invalid'}`;
+            
+            const rejectionReason = document.getElementById('rejection-reason');
+            if (!data.valid && data.rejection_reason) {
+                rejectionReason.classList.remove('d-none');
+                rejectionReason.innerHTML = `<strong>Rejection reason:</strong> ${data.rejection_reason}`;
+            } else {
+                rejectionReason.classList.add('d-none');
+            }
+            
+            const securityIssues = document.getElementById('security-issues');
+            if (data.security_issues && Object.keys(data.security_issues).length > 0) {
+                securityIssues.classList.remove('d-none');
+                securityIssues.innerHTML = `
+                    <div class="security-alert">
+                        <strong>Potential security issues detected:</strong>
+                        <ul>
+                            ${Object.entries(data.security_issues).map(([issue, details]) => `
+                                <li>
+                                    <strong>${issue.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong>
+                                    ${Array.isArray(details) ? details.join(', ') : JSON.stringify(details)}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else {
+                securityIssues.classList.add('d-none');
+            }
+            
+            const urlComponents = document.getElementById('url-components');
+            if (data.valid && data.components) {
+                urlComponents.classList.remove('d-none');
+                urlComponents.innerHTML = `
+                    <strong>URL Components:</strong>
+                    <ul>
+                        <li><strong>Scheme:</strong> ${data.components.scheme}</li>
+                        <li><strong>Authority:</strong> ${data.components.authority}</li>
+                        <li><strong>Path:</strong> ${data.components.path || '(none)'}</li>
+                        <li><strong>Query:</strong> ${data.components.query || '(none)'}</li>
+                        <li><strong>Fragment:</strong> ${data.components.fragment || '(none)'}</li>
+                    </ul>
+                `;
+            } else {
+                urlComponents.classList.add('d-none');
+            }
+            
+            const stateSequence = document.getElementById('state-sequence');
+            stateSequence.innerHTML = data.state_sequence.map((state, index) => `
+                <div class="state-circle ${state === 'rejected' ? 'bg-danger' : ''} ${data.valid && index === data.state_sequence.length - 1 ? 'active' : ''}">
+                    ${state}
+                </div>
+                ${index < data.state_sequence.length - 1 ? '<div>→</div>' : ''}
+            `).join('');
+        })
+        .catch(() => {
+            document.getElementById('validation-result').classList.remove('d-none');
+            document.getElementById('result-status').className = 'alert alert-danger';
+            document.getElementById('result-status').textContent = 'Error validating URL';
+        });
+    });
+</script>
+{% endblock %}

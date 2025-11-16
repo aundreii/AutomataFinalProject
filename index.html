@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Automata Theory Tools{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-intro">
+        <h1 class="display-5">Automata Theory Tools</h1>
+        <p class="lead">A calm, modern toolkit for DFA simulation and secure URL validation.</p>
+    </div>
+</section>
+
+<section class="row g-4 mt-2">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">DFA Simulator</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Create, visualize, and test deterministic finite automata with ease.</p>
+                <a href="/dfa_simulator" class="btn btn-primary">Open DFA Simulator</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">URL Validator</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Validate URLs and flag potential security issues using a DFA approach.</p>
+                <a href="/url_validator" class="btn btn-primary">Open URL Validator</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

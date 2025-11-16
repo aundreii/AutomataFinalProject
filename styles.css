@@ -1,0 +1,163 @@
+/* Japandi + Grey Theme ni Marl */
+
+:root {
+  --bg: #f1f2f0;
+  --surface: #ffffff;
+  --text: #2d2d2d;
+  --muted: #6a6a6a;
+
+  --grey-100: #f6f6f5;
+  --grey-200: #ececea;
+  --grey-300: #e2e1df;
+  --grey-400: #c9c7c3;
+  --grey-500: #a6a4a0;
+  --grey-600: #7e7c78;
+  --grey-700: #5b5a57;
+
+  /* Warm grey accent for a Japandi vibe */
+  --accent: #8c7f73;
+  --accent-contrast: #ffffff;
+
+  --border: #e3e1de;
+  --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Noto Sans JP', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  padding: 2rem 0;
+}
+
+.container { max-width: 1000px; }
+
+/* Navbar */
+.navbar.bg-dark { background-color: var(--grey-700) !important; }
+.navbar { border-bottom: 1px solid var(--grey-400); }
+.navbar .navbar-brand { color: var(--accent-contrast) !important; font-weight: 600; letter-spacing: .2px; }
+.navbar .nav-link { color: #e9e7e5 !important; }
+.navbar .nav-link:hover { color: #ffffff !important; opacity: .9; }
+
+/* Hero */
+.hero {
+  padding: 1.5rem 2rem;
+  background: var(--grey-100);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.hero-intro .lead { color: var(--muted); }
+
+/* Page header */
+.page-header { margin-bottom: 1rem; }
+.page-header .text-muted { color: var(--muted) !important; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.card-header {
+  background: var(--grey-100);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Buttons */
+.btn { border-radius: 10px; transition: background-color .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.btn-primary {
+  background-color: var(--grey-600);
+  border-color: var(--grey-600);
+  color: var(--accent-contrast);
+}
+.btn-primary:hover {
+  background-color: var(--grey-700);
+  border-color: var(--grey-700);
+  box-shadow: 0 6px 16px rgba(0,0,0,.12);
+}
+.btn-secondary {
+  background-color: var(--grey-300);
+  border-color: var(--grey-400);
+  color: var(--text);
+}
+.btn-secondary:hover {
+  background-color: var(--grey-400);
+  border-color: var(--grey-400);
+}
+
+/* Forms */
+.form-label { color: var(--muted); }
+.form-control {
+  border-color: var(--grey-300);
+  background-color: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+}
+.form-control::placeholder { color: #9a9a96; }
+.form-control:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 .2rem rgba(140,127,115,.15);
+}
+
+/* Alerts */
+.alert { border-radius: 10px; }
+.alert-info {
+  background-color: #eef0ed;
+  color: var(--text);
+  border-color: var(--border);
+}
+.alert-success {
+  background-color: #e7efe6;
+  color: #2f4f2f;
+  border-color: #d4e3d3;
+}
+.alert-danger {
+  background-color: #f3e9e9;
+  color: #6a3a3a;
+  border-color: #e6d4d4;
+}
+
+/* DFA visualization */
+#dfa-visualization {
+  height: 400px;
+  background: var(--grey-100);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* State sequence */
+.state-sequence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.state-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--grey-500);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.state-circle.active { background-color: var(--accent); }
+.state-circle.start { border: 3px solid var(--grey-700); }
+.state-circle.accept { border: 3px dashed var(--grey-400); }
+.state-circle.bg-danger { background-color: #a15b5b; }
+
+/* Security issues panel */
+.security-alert {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  border-radius: 10px;
+  background-color: #f3e9e9;
+  border: 1px solid #e6d4d4;
+  color: #6a3a3a;
+}
+
+/* Links */
+a { color: var(--grey-700); text-decoration: none; }
+a:hover { color: var(--grey-700); opacity: .85; text-decoration: none; }

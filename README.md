@@ -11,4 +11,9 @@ This project includes a DFA simulator and URL validator with a web-based interfa
 ## Installation
 
 1. Clone or download this repository
+
 2. Install the required dependencies:
+
+## Create a folder named static, drag and put the file styles.css
+## Create a folder named _pycache_, drag and put the files with .pyc
+## Create a folder named templates, drag and put the HTML files
